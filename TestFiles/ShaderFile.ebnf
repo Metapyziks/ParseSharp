@@ -1,0 +1,115 @@
+(* skip-whitespace *)
+Shader File = { Shader Definition }, End of Input;
+
+Shader Definition = "shader", Name, "{", { Definition Statement }, "}";
+
+Definition Statement = Options Block | Field Definition | Function Definition;
+
+
+Options Block = "options", "{", { Option Statement }, "}";
+
+Option Statement = Name, { Value }, ";";
+
+Attribute List = "[", Attribute, { ",", Attribute }, "]";
+Attribute = Name, [ "(", [ Attribute Argument, { ",", Attribute Argument } ], ")" ) ];
+
+
+Field Definition = { Attribute List }, ( Input Definition | Varying Definition | Uniform Definition | Output Definition ), ";";
+
+Input Definition   = "in",      Type Name, Name;
+Varying Definition = "varying", Type Name, Name;
+Uniform Definition = "uniform", Type Name, Name;
+Output Definition  = "out",     Type Name, Name;
+
+(* collapse *)
+End of Input = ? /$/ ?;
+
+(* match-whitespace *)
+Type Name = Void Type
+          | Scalar Type
+          | Vector Type
+          | Sampler Type;
+
+Void Type = "void";
+
+Scalar Type = Bool Type
+            | Int Type
+            | Unsigned Int Type
+            | Float Type
+            | Double Type;
+
+Bool Type         = "bool";
+Int Type          = "int";
+Unsigned Int Type = "uint";
+Float Type        = "float";
+Double Type       = "double";
+
+Vector Type = Vector Prefix, Vector Postfix;
+
+Vector Prefix = Bool Vector Prefix
+              | Int Vector Prefix
+              | Unsigned Int Vector Prefix
+              | Float Vector Prefix
+              | Double Vector Prefix;
+
+Bool Vector Prefix         = "bvec";
+Int Vector Prefix          = "ivec";
+Unsigned Int Vector Prefix = "uvec";
+Float Vector Prefix        = "fvec";
+Double Vector Prefix       = "dvec";
+
+Vector Postfix = Vector2 Postfix
+               | Vector3 Postfix
+               | Vector4 Postfix;
+
+Vector2 Postfix = "2";
+Vector3 Postfix = "3";
+Vector4 Postfix = "4";
+
+(* match-whitespace *)
+Sampler Type = Sampler Prefix, Sampler Postfix;
+
+Sampler Prefix = Float Sampler Prefix
+               | Int Sampler Prefix
+               | Unsigned Int Sampler Prefix;
+
+Float Sampler Prefix        = "sampler";
+Int Sampler Prefix          = "isampler";
+Unsigned Int Sampler Prefix = "usampler";
+
+Sampler Postfix = ( ( Sampler 1D | Sampler 2D | Sampler Cube | Sampler 2D MS ), [ Sampler Array Postfix ] )
+                | ( Sampler 3D | Sampler 2D Rect );
+
+Sampler 1D      = "1D";
+Sampler 2D      = "2D";
+Sampler 3D      = "3D";
+Sampler Cube    = "Cube";
+Sampler 2D MS   = "2DMS";
+Sampler 2D Rect = "2DRect";
+Sampler Array Postfix = "Array";
+
+Value = String
+      | Integer
+      | Decimal
+      | Name;
+
+(* collapse *)
+Name = ? /[A-Z_][A-Z0-9_]*/i ?;
+
+(* match-whitespace *)
+String = "\"", Quoted String, "\"";
+
+(* omit-from-hierarchy *)
+Quoted String = { Quoted Character | ( "\\", Escaped Character ) };
+
+(* collapse *)
+Quoted Character = ? /[^""\\]/ ?;
+
+(* collapse *)
+Escaped Character = "\\" | "\"" | "n | "t" | "r";
+
+(* collapse *)
+Integer = ? /[0-9]+/ ?;
+
+(* collapse *)
+Decimal = ? /[0-9]*\.[0-9]+?/ ?;

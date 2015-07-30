@@ -48,7 +48,9 @@ namespace ParseSharp
 
         public bool IsUnique(ParseContext ctx)
         {
-            if (Parser == ctx.Parser && InitialOffset == ctx.InitialOffset) return false;
+            if (Parser == ctx.Parser && InitialOffset == ctx.InitialOffset
+                && (Parent == null || ctx.Parent == null
+                || Parent.Parser == ctx.Parent.Parser)) return false;
             return Parent == null || Parent.IsUnique(ctx);
         }
 
@@ -119,9 +121,9 @@ namespace ParseSharp
                     .FirstOrDefault(x => x != null && x.Context.Offset == max)
                     .Context,
                 expected
-                    .Distinct()
                     .Where(x => x != null && x.Context.Offset == max)
                     .SelectMany(x => x.Options)
+                    .Distinct()
                     .ToArray(), 0);
         }
 
@@ -147,6 +149,11 @@ namespace ParseSharp
 
             Offset += literal.Length;
             return true;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("Offset: {0}, Next: \"{1}\"", Offset, Input.Substring(Offset, Math.Min(Remaining, 4)));
         }
     }
 }

@@ -164,8 +164,8 @@ namespace ParseSharp
                 .SelectMany(x => x.FlattenHierarchy ? x : Single(x))
                 .ToArray();
 
-            if (failed != null) {
-                tailError = ctx.Expected(tailError, failed.Error as SymbolExpectedError);
+            if (failed != null && failed.Error is SymbolExpectedError) {
+                tailError = ctx.Expected(tailError, (SymbolExpectedError) failed.Error);
             }
 
             return (failed != null && failed.Fatal)
