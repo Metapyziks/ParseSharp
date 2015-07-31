@@ -4,13 +4,14 @@ using System.Linq;
 
 namespace ParseSharp
 {
-    public class ParseResult : IEnumerable<ParseResult>
+    public class ParseResult : ParseLocatable, IEnumerable<ParseResult>
     {
         private readonly ParseResult[] _children;
 
         internal SymbolExpectedError TailError { get; set; }
 
         private string _value;
+        private readonly bool _trim;
 
         public readonly string Input;
         public readonly Parser Parser;
@@ -27,7 +28,18 @@ namespace ParseSharp
 
         public int ChildCount { get { return _children.Length; } }
 
-        public string Value { get { return _value ?? (_value = Input.Substring(Index, Length)); } }
+        public string Value
+        {
+            get
+            {
+                if (_value != null) return _value;
+
+                _value = Input.Substring(Index, Length);
+                if (_trim) _value = _value.Trim();
+
+                return _value;
+            }
+        }
 
         internal ParseResult(ParseError e, bool fatal = true)
             : this(e.Context, null)
@@ -43,6 +55,8 @@ namespace ParseSharp
             Index = ctx.InitialOffset;
             Length = ctx.Offset - ctx.InitialOffset;
 
+            _trim = ctx.Parent != null && ctx.Parent.WhitespacePolicy == WhitespacePolicy.Ignore;
+
             _children = children;
             Input = ctx.Input;
         }
@@ -56,8 +70,20 @@ namespace ParseSharp
             Error = original.Error;
             Fatal = original.Fatal;
 
+            _trim = original._trim;
+
             _children = original._children;
             Input = original.Input;
+        }
+
+        protected override string GetInput()
+        {
+            return Input;
+        }
+
+        protected override int GetOffset()
+        {
+            return Index;
         }
 
         public ParseResult this[int childIndex]
@@ -97,7 +123,7 @@ namespace ParseSharp
 
             if (_children.Length == 0) {
                 return string.Format("{2}{0}: \"{1}\"",
-                    Parser.Name, Value.Trim(), indent);
+                    Parser.Name, Value, indent);
             }
 
             return string.Format("{2}{0}:{1}",

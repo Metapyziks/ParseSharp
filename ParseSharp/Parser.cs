@@ -149,7 +149,7 @@ namespace ParseSharp
             return Parse(new ParseContext(input, offset));
         }
 
-        internal ParseResult Parse(ParseContext parentContext)
+        public ParseResult Parse(ParseContext parentContext)
         {
             var ctx = new ParseContext(parentContext, this);
             if (!parentContext.IsUnique(ctx)) {

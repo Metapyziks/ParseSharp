@@ -36,7 +36,10 @@ End of Input = ? /$/ ?;
 Type Name = Void Type
           | Scalar Type
           | Vector Type
-          | Sampler Type;
+          | Sampler Type
+          | Custom Type;
+
+Custom Type = Name;
 
 Void Type = "void";
 

@@ -44,6 +44,7 @@
     <Compile Include="BackusNaur\Semantics.cs" />
     <Compile Include="ParseContext.cs" />
     <Compile Include="ParseError.cs" />
+    <Compile Include="ParseLocatable.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="ParseResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

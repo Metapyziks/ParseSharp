@@ -3,39 +3,18 @@ using System.Linq;
 
 namespace ParseSharp
 {
-    public class ParseError : IEquatable<ParseError>
+    public class ParseError : ParseLocatable, IEquatable<ParseError>
     {
         public static implicit operator ParseResult(ParseError error)
         {
             return new ParseResult(error, true);
         }
 
-        private int _lineNumber;
-        private int _columnNumber;
-
         internal readonly int Priority;
         internal readonly ParseContext Context;
 
         public readonly String Message;
-
-        public int LineNumber
-        {
-            get
-            {
-                if (_lineNumber == 0) FindLocation();
-                return _lineNumber;
-            }
-        }
-
-        public int ColumnNumber
-        {
-            get
-            { 
-                if (_columnNumber == 0) FindLocation();
-                return _columnNumber;
-            }
-        }
-
+        
         protected internal ParseError(ParseContext ctx, string message, int priority = 0)
         {
             Priority = priority;
@@ -44,24 +23,14 @@ namespace ParseSharp
             Message = message;
         }
 
-        private void FindLocation()
+        protected override string GetInput()
         {
-            _lineNumber = 1;
-            _columnNumber = 1;
+            return Context.Input;
+        }
 
-            var input = Context.Input;
-
-            for (var i = 0; i < input.Length && i < Context.Offset; ++i) {
-                switch (input[i]) {
-                    case '\n':
-                        ++_lineNumber;
-                        _columnNumber = 1;
-                        break;
-                    default:
-                        ++_columnNumber;
-                        break;
-                }
-            }
+        protected override int GetOffset()
+        {
+            return Context.Offset;
         }
 
         public override string ToString()
