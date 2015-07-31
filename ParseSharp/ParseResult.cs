@@ -97,7 +97,7 @@ namespace ParseSharp
 
             if (_children.Length == 0) {
                 return string.Format("{2}{0}: \"{1}\"",
-                    Parser.Name, Value, indent);
+                    Parser.Name, Value.Trim(), indent);
             }
 
             return string.Format("{2}{0}:{1}",

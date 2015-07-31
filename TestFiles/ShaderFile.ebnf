@@ -11,8 +11,7 @@ Options Block = "options", "{", { Option Statement }, "}";
 Option Statement = Name, { Value }, ";";
 
 Attribute List = "[", Attribute, { ",", Attribute }, "]";
-Attribute = Name, [ "(", [ Attribute Argument, { ",", Attribute Argument } ], ")" ) ];
-
+Attribute = Name, [ "(", [ Value, { ",", Value } ], ")" ];
 
 Field Definition = { Attribute List }, ( Input Definition | Varying Definition | Uniform Definition | Output Definition ), ";";
 
@@ -20,6 +19,15 @@ Input Definition   = "in",      Type Name, Name;
 Varying Definition = "varying", Type Name, Name;
 Uniform Definition = "uniform", Type Name, Name;
 Output Definition  = "out",     Type Name, Name;
+
+Function Definition = { Attribute List }, Type Name, Name, "(", Parameter List, ")", Function Body;
+
+Parameter List = [ Parameter Definition, { ",", Parameter Definition } ];
+
+Parameter Definition = Type Name, Name;
+
+Function Body = "{", { Function Statement }, "}";
+Function Statement = ? /[^;{}]+/ ?, ( Function Body | ";" );
 
 (* collapse *)
 End of Input = ? /$/ ?;
@@ -55,7 +63,7 @@ Vector Prefix = Bool Vector Prefix
 Bool Vector Prefix         = "bvec";
 Int Vector Prefix          = "ivec";
 Unsigned Int Vector Prefix = "uvec";
-Float Vector Prefix        = "fvec";
+Float Vector Prefix        = "vec";
 Double Vector Prefix       = "dvec";
 
 Vector Postfix = Vector2 Postfix
@@ -77,16 +85,16 @@ Float Sampler Prefix        = "sampler";
 Int Sampler Prefix          = "isampler";
 Unsigned Int Sampler Prefix = "usampler";
 
-Sampler Postfix = ( ( Sampler 1D | Sampler 2D | Sampler Cube | Sampler 2D MS ), [ Sampler Array Postfix ] )
-                | ( Sampler 3D | Sampler 2D Rect );
+Sampler Postfix = ( ( Sampler1D | Sampler2D | SamplerCube | Sampler2DMS ), [ SamplerArray Postfix ] )
+                | ( Sampler3D | Sampler2DRect );
 
-Sampler 1D      = "1D";
-Sampler 2D      = "2D";
-Sampler 3D      = "3D";
-Sampler Cube    = "Cube";
-Sampler 2D MS   = "2DMS";
-Sampler 2D Rect = "2DRect";
-Sampler Array Postfix = "Array";
+Sampler1D      = "1D";
+Sampler2D      = "2D";
+Sampler3D      = "3D";
+SamplerCube    = "Cube";
+Sampler2DMS   = "2DMS";
+Sampler2DRect = "2DRect";
+SamplerArray Postfix = "Array";
 
 Value = String
       | Integer
@@ -97,16 +105,22 @@ Value = String
 Name = ? /[A-Z_][A-Z0-9_]*/i ?;
 
 (* match-whitespace *)
-String = "\"", Quoted String, "\"";
+String = "\"", Double Quoted String, "\"" | "'", Single Quoted String, "'";
 
 (* omit-from-hierarchy *)
-Quoted String = { Quoted Character | ( "\\", Escaped Character ) };
+Double Quoted String = { Double Quoted Character | ( "\\", Escaped Character ) };
+
+(* omit-from-hierarchy *)
+Single Quoted String = { Double Quoted Character | ( "\\", Escaped Character ) };
 
 (* collapse *)
-Quoted Character = ? /[^""\\]/ ?;
+Double Quoted Character = ? /[^"\\]/ ?;
 
 (* collapse *)
-Escaped Character = "\\" | "\"" | "n | "t" | "r";
+Single Quoted Character = ? /[^'\\]/ ?;
+
+(* collapse *)
+Escaped Character = "\\" | "\"" | "'" | "n" | "t" | "r";
 
 (* collapse *)
 Integer = ? /[0-9]+/ ?;

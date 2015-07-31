@@ -32,5 +32,10 @@ shader Sprite
     void frag()
     {
         oColor = texture2D(uSprite, vTexture) * vColor;
+
+        if (true)
+        {
+            doSomething();
+        }
     }
 }

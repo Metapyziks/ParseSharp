@@ -48,9 +48,7 @@ namespace ParseSharp
 
         public bool IsUnique(ParseContext ctx)
         {
-            if (Parser == ctx.Parser && InitialOffset == ctx.InitialOffset
-                && (Parent == null || ctx.Parent == null
-                || Parent.Parser == ctx.Parent.Parser)) return false;
+            if (Parser == ctx.Parser && InitialOffset == ctx.InitialOffset) return false;
             return Parent == null || Parent.IsUnique(ctx);
         }
 

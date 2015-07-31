@@ -1,1 +1,0 @@
-variable[index] = 10
