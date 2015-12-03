@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
 
@@ -6,14 +7,7 @@ namespace ParseSharp
 {
     public sealed class ParseContext
     {
-        private static int SkipWhitespace(String input, int offset)
-        {
-            while (offset < input.Length && char.IsWhiteSpace(input[offset])) {
-                ++offset;
-            }
-
-            return offset;
-        }
+        private readonly HashSet<Parser> _whitespaceParsers;
 
         public readonly ParseContext Parent;
         public readonly Parser Parser;
@@ -31,19 +25,64 @@ namespace ParseSharp
             Input = input;
             InitialOffset = Offset = offset;
             WhitespacePolicy = WhitespacePolicy.Match;
+            _whitespaceParsers = null;
         }
 
         public ParseContext(ParseContext parent, Parser parser)
-            : this(parent.Input, parent.WhitespacePolicy == WhitespacePolicy.Ignore
-                ? SkipWhitespace(parent.Input, parent.Offset) : parent.Offset)
+            : this(parent.Input, -1)
         {
             Parent = parent;
             Parser = parser;
 
             WhitespacePolicy = parent.WhitespacePolicy;
 
+            var wsRule = parser as WhitespaceRuleParser;
+            if (wsRule != null)
+            {
+                _whitespaceParsers = new HashSet<Parser>(parent._whitespaceParsers ?? Enumerable.Empty<Parser>())
+                {
+                    wsRule.WhitespaceParser
+                };
+            }
+            else
+            {
+                _whitespaceParsers = parent._whitespaceParsers;
+            }
+
             var policy = parser as WhitespacePolicyParser;
             if (policy != null) WhitespacePolicy = policy.Policy;
+
+            InitialOffset = Offset = parent.WhitespacePolicy == WhitespacePolicy.Ignore
+                ? SkipWhitespace(parent.Input, parent.Offset) : parent.Offset;
+        }
+
+        private int SkipWhitespace(String input, int offset)
+        {
+            while (offset < input.Length)
+            {
+                while (offset < input.Length && char.IsWhiteSpace(input[offset]))
+                {
+                    ++offset;
+                }
+
+                if (_whitespaceParsers == null) break;
+
+                var matched = false;
+                foreach (var whitespaceParser in _whitespaceParsers)
+                {
+                    var result = whitespaceParser.Parse(input, offset);
+                    if (result.Success && result.End > offset)
+                    {
+                        matched = true;
+                        offset = result.End;
+                        break;
+                    }
+                }
+
+                if (!matched) break;
+            }
+
+            return offset;
         }
 
         public bool IsUnique(ParseContext ctx)

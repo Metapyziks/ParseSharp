@@ -166,7 +166,7 @@ namespace ParseSharp.BackusNaur
         internal bool Defined { get; private set; }
 
         public readonly String Identifier;
-        public readonly String[] Options; 
+        public readonly RuleOption[] Options; 
         public readonly Expression Expression;
         public readonly LateDefinedParser GeneratedParser;
 
@@ -174,15 +174,14 @@ namespace ParseSharp.BackusNaur
             : base(original)
         {
             Options = GetChildren<RuleOption>(0, ChildCount - 2)
-                .Select(x => x.Option)
                 .ToArray();
 
             Identifier = GetChild<Identifier>(ChildCount - 2).Value;
             Expression = GetChild<Expression>(ChildCount - 1);
             
             GeneratedParser = Parser.LateDefined(Identifier,
-                Options.Contains("collapse") ? LateDefinedType.Collapse :
-                Options.Contains("omit-from-hierarchy") ? LateDefinedType.OmitFromHierarchy :
+                Options.Any(x => x.Option == "collapse") ? LateDefinedType.Collapse :
+                Options.Any(x => x.Option == "omit-from-hierarchy") ? LateDefinedType.OmitFromHierarchy :
                 LateDefinedType.Default);
         }
 
@@ -193,8 +192,15 @@ namespace ParseSharp.BackusNaur
 
             GeneratedParser.Definition = Expression.Generate(ctx);
 
-            var matchWhitespace = Options.Contains("match-whitespace");
-            var ignoreWhitespace = Options.Contains("skip-whitespace");
+            var matchWhitespace = Options.Any(x => x.Option == "match-whitespace");
+            var ignoreWhitespace = Options.Any(x => x.Option == "skip-whitespace");
+
+            foreach (var option in Options.Where(x => x.Option == "whitespace-rule"))
+            {
+                var arg = option.Args.First();
+                var rule = ctx.GetRule(arg, ((Identifier) arg).Value);
+                GeneratedParser.Definition = new WhitespaceRuleParser(GeneratedParser.Definition, rule);
+            }
 
             if (matchWhitespace && !ignoreWhitespace) {
                 GeneratedParser.Definition = GeneratedParser.Definition.MatchWhitespace;
@@ -209,10 +215,12 @@ namespace ParseSharp.BackusNaur
     internal sealed class RuleOption : ResultSubstitution
     {
         public readonly String Option;
+        public readonly ParseResult[] Args;
 
         public RuleOption(ParseResult original) : base(original)
         {
-            Option = Value.Trim();
+            Option = Value.Split(' ').First().Trim();
+            Args = this.ToArray();
         }
     }
 

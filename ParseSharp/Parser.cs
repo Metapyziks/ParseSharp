@@ -134,6 +134,8 @@ namespace ParseSharp
         public virtual String ExpectingDescription { get { return ToString(); } }
 
         public bool OmitFromResult { get; private set; }
+
+        public IEnumerable<Parser> WhitespaceParsers { get; private set; } 
         
         protected abstract IEnumerable<ParseResult> OnParse(ParseContext ctx);
 
@@ -526,6 +528,11 @@ namespace ParseSharp
             _inner = inner;
         }
 
+        public override string ToString()
+        {
+            return Inner.ToString();
+        }
+
         protected override IEnumerable<ParseResult> OnParse(ParseContext ctx)
         {
             yield return ctx.Parse(_inner);
@@ -541,10 +548,16 @@ namespace ParseSharp
         {
             Policy = policy;
         }
+    }
 
-        public override string ToString()
+    public sealed class WhitespaceRuleParser : WrappedParser
+    {
+        public readonly Parser WhitespaceParser;
+
+        internal WhitespaceRuleParser(Parser inner, Parser whitespaceParser)
+            : base(inner, true)
         {
-            return Inner.ToString();
+            WhitespaceParser = whitespaceParser;
         }
     }
 
